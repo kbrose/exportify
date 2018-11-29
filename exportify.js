@@ -178,15 +178,6 @@ var PlaylistRow = React.createClass({
         <td></td>
         <td className="text-right"><button className="btn btn-default btn-xs btn-success" type="submit" onClick={this.exportSaved}><span className="glyphicon glyphicon-save"></span> Export</button></td>
       </tr>
-
-      <tr key={this.props.key}>
-        <td>{this.renderIcon(playlist)}</td>
-        <td>{playlist.name}</td>
-        <td colSpan="2">This playlist is not supported</td>
-        <td>{this.renderTickCross(playlist.public)}</td>
-        <td>{this.renderTickCross(playlist.collaborative)}</td>
-        <td>&nbsp;</td>
-      </tr>
     );
     return (
       <tr key={this.props.key}>
