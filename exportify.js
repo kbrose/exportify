@@ -317,7 +317,7 @@ var PlaylistExporter = {
 
   csvDataSaved: function(access_token, savedlist) {
     var requests = [];
-    var limit = 100;
+    var limit = 50;
 
     for (var offset = 0; offset < savedlist.total; offset = offset + limit) {
       requests.push(
