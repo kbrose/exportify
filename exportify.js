@@ -146,6 +146,10 @@ var PlaylistRow = React.createClass({
     PlaylistExporter.export(this.props.access_token, this.props.playlist);
   },
 
+  exportSaved: function() {
+    PlaylistExporter.exportSaved(this.props.access_token, this.props.playlist)
+  },
+
   renderTickCross: function(condition) {
     if (condition) {
       return <i className="fa fa-lg fa-check-circle-o"></i>
@@ -156,7 +160,7 @@ var PlaylistRow = React.createClass({
 
   renderIcon: function(playlist) {
     if (playlist.name == 'Starred') {
-      return <i className="glyphicon glyphicon-star" style={{ color: 'gold' }}></i>;
+      return <i className="fa fa-check" style={{ color: 'gold' }}></i>;
     } else {
       return <i className="fa fa-music"></i>;
     }
@@ -165,6 +169,16 @@ var PlaylistRow = React.createClass({
   render: function() {
     playlist = this.props.playlist
     if(playlist.uri==null) return (
+      <tr key={this.props.key}>
+        <td>{this.renderIcon(playlist)}</td>
+        <td>{playlist.name}</td>
+        <td></td>
+        <td>{playlist.total}</td>
+        <td></td>
+        <td></td>
+        <td className="text-right"><button className="btn btn-default btn-xs btn-success" type="submit" onClick={this.exportSaved}><span className="glyphicon glyphicon-save"></span> Export</button></td>
+      </tr>
+
       <tr key={this.props.key}>
         <td>{this.renderIcon(playlist)}</td>
         <td>{playlist.name}</td>
@@ -238,10 +252,10 @@ var PlaylistsExporter = {
       var limit = 20;
       var userId = response.id;
 
-      // Initialize requests with starred playlist
+      // Initialize requests with saved tracks
       var requests = [
         window.Helpers.apiCall(
-          "https://api.spotify.com/v1/users/" + userId + "/starred",
+          "https://api.spotify.com/v1/users/" + userId + "/tracks",
           access_token
         )
       ];
@@ -301,6 +315,76 @@ var PlaylistExporter = {
       var blob = new Blob(["\uFEFF" + data], { type: "text/csv;charset=utf-8" });
       saveAs(blob, this.fileName(playlist));
     }.bind(this))
+  },
+
+  exportSaved: function(access_token, playlist) {
+    this.csvDataSaved(access_token, playlist).then(function(data) {
+      var blob = new Blob(["\uFEFF" + data], { type: "text/csv;charset=utf-8" });
+      saveAs(blob, this.fileName(playlist));
+    }.bind(this))
+  },
+
+  csvDataSaved: function(access_token, savedlist) {
+    var requests = [];
+    var limit = 100;
+
+    for (var offset = 0; offset < savedlist.total; offset = offset + limit) {
+      requests.push(
+        window.Helpers.apiCall(savedlist.href.split('?')[0] + '?offset=' + offset + '&limit=' + limit, access_token)
+      )
+    }
+
+    return $.when.apply($, requests).then(function() {
+      var responses = [];
+
+      // Handle either single or multiple responses
+      if (typeof arguments[0] != 'undefined') {
+        if (typeof arguments[0].href == 'undefined') {
+          responses = Array.prototype.slice.call(arguments).map(function(a) { return a[0] });
+        } else {
+          responses = [arguments[0]];
+        }
+      }
+
+      var tracks = responses.map(function(response) {
+        return response.items.map(function(item) {
+          return [
+            item.track.uri,
+            item.track.name,
+            item.track.artists.map(function(artist) { return artist.name }).join(', '),
+            item.track.album.name,
+            item.track.disc_number,
+            item.track.track_number,
+            item.track.duration_ms,
+            item.added_by == null ? '' : item.added_by.uri,
+            item.added_at
+          ].map(function(track) { return '"' + track + '"'; })
+        });
+      });
+
+      // Flatten the array of pages
+      tracks = $.map(tracks, function(n) { return n })
+
+      tracks.unshift([
+        "Spotify URI",
+        "Track Name",
+        "Artist Name",
+        "Album Name",
+        "Disc Number",
+        "Track Number",
+        "Track Duration (ms)",
+        "Added By",
+        "Added At"
+      ]);
+
+      csvContent = '';
+      tracks.forEach(function(infoArray, index){
+        dataString = infoArray.join(",");
+        csvContent += index < tracks.length ? dataString+ "\n" : dataString;
+      });
+
+      return csvContent;
+    });
   },
 
   csvData: function(access_token, playlist) {
