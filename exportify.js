@@ -170,8 +170,8 @@ var PlaylistRow = React.createClass({
     playlist = this.props.playlist
     if(playlist.uri==null) return (
       <tr key={this.props.key}>
-        <td>{this.renderIcon(playlist)}</td>
-        <td>{playlist.name}</td>
+        <td><i className="fa fa-check"></i></td>
+        <td><i>Saved Songs</i></td>
         <td></td>
         <td>{playlist.total}</td>
         <td></td>
