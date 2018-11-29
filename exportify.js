@@ -311,7 +311,7 @@ var PlaylistExporter = {
   exportSaved: function(access_token, playlist) {
     this.csvDataSaved(access_token, playlist).then(function(data) {
       var blob = new Blob(["\uFEFF" + data], { type: "text/csv;charset=utf-8" });
-      saveAs(blob, this.fileName(playlist));
+      saveAs(blob, 'Saved Songs.csv');
     }.bind(this))
   },
 
